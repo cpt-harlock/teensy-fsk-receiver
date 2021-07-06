@@ -3,13 +3,14 @@
 /**
  * Let's try to use Teensy 4.0 as a DSP companion for ADC values read from an external device (using UART interface)
  */
-#define SAMPLING_FREQUENCY (1400.0)
+#define SAMPLING_FREQUENCY (495.0)
 #define FFT_LENGTH (512)
 #define FREQUENCY_ONE (200.0)
 #define FREQUENCY_ZERO (180.0)
 #define CORRELATION_LENGTH (FFT_LENGTH * 2 - 1)
 #define CORRELATION_THRESHOLD (0.93)
 #define BYTES_PER_MESSAGE (1)
+#define DEBUG_PIN (15)
 float32_t chirpSamplesBuffer[FFT_LENGTH];
 float32_t workingChirpSamplesBuffer[FFT_LENGTH];
 float32_t knownChirpSamplesBuffer[FFT_LENGTH] = {
@@ -550,7 +551,7 @@ void adc_start(uint8_t mux, uint8_t aref);
 
 void setup()
 {
-  Serial.begin(38400); //reading as fast as possible
+  Serial.begin(115200); //reading as fast as possible
   Serial2.begin(115200);
   memset(chirpSamplesBuffer, 0, sizeof(float32_t) * FFT_LENGTH);
   arm_rfft_fast_init_f32(&fftInstance,FFT_LENGTH);
@@ -558,11 +559,13 @@ void setup()
   freq_zero_bin = round((FREQUENCY_ZERO * FFT_LENGTH)/SAMPLING_FREQUENCY);
   analogReadRes(12); 
   analogReadAveraging(1);
+  pinMode(DEBUG_PIN,OUTPUT);
 }
 
 void loop()
 {
   sample = analogRead(A0);
+  digitalWrite(DEBUG_PIN,1);
   if (1)
   {
     //read float32_t as binary (4 bytes)
@@ -637,13 +640,14 @@ void loop()
       }
       //correlation
       arm_correlate_f32(workingChirpSamplesBuffer, FFT_LENGTH, knownChirpSamplesBuffer, FFT_LENGTH, correlationBuffer);
+      digitalWrite(DEBUG_PIN,0);
       for (size_t i = 0; i < CORRELATION_LENGTH; i++)
       {
         if (correlationBuffer[i] > maxCorrelationValue)
           maxCorrelationValue = correlationBuffer[i];
       }
-      // Serial.printf("Max correlation %f\r\n", maxCorrelationValue);
-      Serial.printf("Sample %u\r\n",sample);
+      Serial.printf("Max correlation %f\r\n", maxCorrelationValue);
+      // Serial.printf("Sample %u\r\n",sample);
       if (maxCorrelationValue > CORRELATION_THRESHOLD)
       {
         Serial.println("Receiving data");
@@ -652,4 +656,5 @@ void loop()
       }
     }
   }
+  
 }
