@@ -16,6 +16,9 @@ using namespace TeensyTimerTool;
 #define CHIRP_MAGNITUDE_THRESHOLD (14.0)
 #define CHIRP_MAGNITUDE_INTERVAL (2)
 #define BYTES_PER_MESSAGE (3)
+#define ADC_SENSOR_PIN (14)
+#define ADC_RESOLUTION (10)
+#define ADC_SAMPLE_AVERAGE (4)
 #define DEBUG_PIN (15)
 float32_t chirpSamplesBuffer[FFT_LENGTH];
 float32_t workingChirpSamplesBuffer[FFT_LENGTH];
@@ -48,7 +51,7 @@ void adc_start(uint8_t mux, uint8_t aref);
 void timerCallback()
 {
   // digitalWriteFast(DEBUG_PIN,!digitalReadFast(DEBUG_PIN));
-  sample = analogRead(A0);
+  sample = analogRead(ADC_SENSOR_PIN);
   sampleAvailable = true;
 }
 
@@ -62,8 +65,8 @@ void setup()
   freq_one_bin = round((FREQUENCY_ONE * FFT_LENGTH) / SAMPLING_FREQUENCY);
   freq_zero_bin = round((FREQUENCY_ZERO * FFT_LENGTH) / SAMPLING_FREQUENCY);
   freq_chirp_bin = round((FREQUENCY_CHIRP * FFT_LENGTH) / SAMPLING_FREQUENCY);
-  analogReadRes(10);
-  analogReadAveraging(4);
+  analogReadRes(ADC_RESOLUTION);
+  analogReadAveraging(ADC_SAMPLE_AVERAGE);
   pinMode(DEBUG_PIN, OUTPUT);
   t1.beginPeriodic(timerCallback, 2'000);
   Serial.printf("Frequency one bin: %u\r\n",freq_one_bin);
